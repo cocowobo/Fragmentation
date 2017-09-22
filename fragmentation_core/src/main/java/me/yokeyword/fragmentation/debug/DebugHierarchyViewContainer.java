@@ -21,6 +21,19 @@ import me.yokeyword.fragmentation.R;
 
 /**
  * Created by YoKeyword on 16/2/21.
+ * <p>
+ *  自定义树状图view容器，用于显示Fragment的层级嵌套结构
+ *  结构是
+ *  容器包裹条目，每个条目代表一个Fragment，每一个条目都可能拥有子Fragment，则此条目可展开
+ *
+ *  view简介：
+ *  01.此view根View是个竖直ScroollView，ScroollView内部必须是个线性布局
+ *  02.此View构造其实并没有真正进入逻辑业务，只是初始化了。真实义务调用是在设置数据的时候{{@link #bindFragmentRecords(List)}}
+ *  03.{@link #bindFragmentRecords(List)}方法调用时即用户显示此View查看Fragment结构 的时候，所以此方法会将保存的Fragment结构数据分析并绘制
+ *  04.每次显示界面，都会清空线性布局的子view，然后{@link #getTitleLayout()}加入标题view，
+ *  05.{@link #setView(List, int, TextView)}此方法是核心方法，渲染条目
+ *  06.item的高度是固定的50dp ，缩进Padding是16dp，当Fragment层级逐层展开，每一层的缩进padding成倍数算法增长
+ * </p>
  */
 public class DebugHierarchyViewContainer extends ScrollView {
     private Context mContext;
@@ -111,23 +124,26 @@ public class DebugHierarchyViewContainer extends ScrollView {
     private void setView(final List<DebugFragmentRecord> fragmentRecordList, final int hierarchy, final TextView tvItem) {
         for (int i = fragmentRecordList.size() - 1; i >= 0; i--) {
             DebugFragmentRecord child = fragmentRecordList.get(i);
-            int tempHierarchy = hierarchy;
+            int tempHierarchy = hierarchy;  //条目层次id标示
 
             final TextView childTvItem;
             childTvItem = getTextView(child, tempHierarchy);
-            childTvItem.setTag(R.id.hierarchy, tempHierarchy);
+            childTvItem.setTag(R.id.hierarchy, tempHierarchy);        //给每一个TextView谁知标记Tag，代表此TextView的层次id
 
             final List<DebugFragmentRecord> childFragmentRecord = child.childFragmentRecord;
             if (childFragmentRecord != null && childFragmentRecord.size() > 0) {
-                tempHierarchy++;
-                childTvItem.setCompoundDrawablesWithIntrinsicBounds(R.drawable.fragmentation_ic_right, 0, 0, 0);
+                /**处理当前条目是否拥有子条目，即此Fragment是否包含子Fragment，如果包含子View则当前父view可点击触发展开列表*/
+                tempHierarchy++;         //层次id加一
+                childTvItem.setCompoundDrawablesWithIntrinsicBounds(R.drawable.fragmentation_ic_right, 0, 0, 0);   //如果有子View。则设置左边箭头图片
                 final int finalChilHierarchy = tempHierarchy;
                 childTvItem.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        //校验当前被点击的TextView是否已经是展开列表形态
                         if (v.getTag(R.id.isexpand) != null) {
                             boolean isExpand = (boolean) v.getTag(R.id.isexpand);
                             if (isExpand) {
+                                //如果是展开就闭合，同时修正左边的箭头图标
                                 childTvItem.setCompoundDrawablesWithIntrinsicBounds(R.drawable.fragmentation_ic_right, 0, 0, 0);
                                 DebugHierarchyViewContainer.this.removeView(finalChilHierarchy);
                             } else {
@@ -135,19 +151,19 @@ public class DebugHierarchyViewContainer extends ScrollView {
 
                             }
                             v.setTag(R.id.isexpand, !isExpand);
-                        } else {
+                        } else {       //如果未取到此标志（展开状态），则认定是第一次点击，则设置上去，同时确认触发展开事件
                             childTvItem.setTag(R.id.isexpand, true);
                             handleExpandView(childFragmentRecord, finalChilHierarchy, childTvItem);
                         }
                     }
                 });
-            } else {
+            } else {            //如果没有子View，则设置在计算的左Padding之上再加上16dp。
                 childTvItem.setPadding(childTvItem.getPaddingLeft() + mPadding, 0, mPadding, 0);
             }
 
-            if (tvItem == null) {
+            if (tvItem == null) {               //如果未传入父层级TextView则当前TextView是第一层的TextView。
                 mLinearLayout.addView(childTvItem);
-            } else {
+            } else {                            //如果未传入父层级TextView则当前TextView是第一层的TextView。添加的位置是父层次加1
                 mLinearLayout.addView(childTvItem, mLinearLayout.indexOfChild(tvItem) + 1);
             }
         }
@@ -158,34 +174,37 @@ public class DebugHierarchyViewContainer extends ScrollView {
         childTvItem.setCompoundDrawablesWithIntrinsicBounds(R.drawable.fragmentation_ic_expandable, 0, 0, 0);
     }
 
+    /**移除view的方法，传入的hierarchy 含义是展开后view 的tag*/
     private void removeView(int hierarchy) {
         int size = mLinearLayout.getChildCount();
         for (int i = size - 1; i >= 0; i--) {
             View view = mLinearLayout.getChildAt(i);
             if (view.getTag(R.id.hierarchy) != null && (int) view.getTag(R.id.hierarchy) >= hierarchy) {
+                /**移除展开后显示的view */
                 mLinearLayout.removeView(view);
             }
         }
     }
 
+    /** 生成Itme的内容view */
     private TextView getTextView(DebugFragmentRecord fragmentRecord, int hierarchy) {
         TextView tvItem = new TextView(mContext);
 
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, mItemHeight);
-        tvItem.setLayoutParams(params);
-        if (hierarchy == 0) {
+        tvItem.setLayoutParams(params);  //设置高度通过布局参数
+        if (hierarchy == 0) {            //如果是第一层item则设置
             tvItem.setTextColor(Color.parseColor("#333333"));
-            tvItem.setTextSize(16);
+            tvItem.setTextSize(16);    //设置字体为16sp
         }
         tvItem.setGravity(Gravity.CENTER_VERTICAL);
-        tvItem.setPadding((int) (mPadding + hierarchy * mPadding * 1.5), 0, mPadding, 0);
-        tvItem.setCompoundDrawablePadding(mPadding / 2);
+        tvItem.setPadding((int) (mPadding + hierarchy * mPadding * 1.5), 0, mPadding, 0); //左Padding成倍数增加
+        tvItem.setCompoundDrawablePadding(mPadding / 2);  //设置图片padding为1/2
 
         TypedArray a = mContext.obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackground});
-        tvItem.setBackgroundDrawable(a.getDrawable(0));
+        tvItem.setBackgroundDrawable(a.getDrawable(0));   //设置背景
         a.recycle();
 
-        tvItem.setText(fragmentRecord.fragmentName);
+        tvItem.setText(fragmentRecord.fragmentName);       //设置内容
 
         return tvItem;
     }

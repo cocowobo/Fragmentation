@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import me.yokeyword.fragmentation.R;
 
 /**
- * Created by YoKeyword on 16/2/5.
+ * 默认垂直动画
  */
 public class DefaultVerticalAnimator extends FragmentAnimator implements Parcelable{
 

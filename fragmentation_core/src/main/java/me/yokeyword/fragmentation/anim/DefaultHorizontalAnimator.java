@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import me.yokeyword.fragmentation.R;
 
 /**
- * Created by YoKeyword on 16/2/5.
+ * 默认水平动画
  */
 public class DefaultHorizontalAnimator extends FragmentAnimator implements Parcelable{
 

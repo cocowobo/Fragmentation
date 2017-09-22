@@ -28,6 +28,7 @@ import me.yokeyword.fragmentation.R;
 
 /**
  * Created by YoKey on 17/6/13.
+ * 调试窗口具体实现类，debug专用
  */
 
 public class DebugStackDelegate implements SensorEventListener {
