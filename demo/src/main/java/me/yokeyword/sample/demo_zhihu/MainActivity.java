@@ -41,7 +41,7 @@ public class MainActivity extends SupportActivity implements BaseMainFragment.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.zhihu_activity_main);
 //        EventBus.getDefault().register(this);
-
+        /**判断本 Activity 使用的 第一个Fragment 是否已经有过缓存，来动态判断是否恢复*/
         SupportFragment firstFragment = findFragment(ZhihuFirstFragment.class);
         if (firstFragment == null) {
             mFragments[FIRST] = ZhihuFirstFragment.newInstance();
