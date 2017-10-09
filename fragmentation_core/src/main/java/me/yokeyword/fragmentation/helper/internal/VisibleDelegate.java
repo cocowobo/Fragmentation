@@ -35,7 +35,7 @@ import me.yokeyword.fragmentation.ISupportFragment;
  * 06.dispatchSupportVisible(boolean)，通过代码追寻，发现，比方法调用基本上都先判过 mIsSupportVisible属性，且取mIsSupportVisible
  *    相反值传入dispatchSupportVisible(boolean)方法 ，看此方法代码，发现，其内部还，保守性的再次判断了 mIsSupportVisible属性和
  *    传入的是否相同，如果相同，则和上面的取反规则相悖论，直接return，并将mNeedDispatch = true;那这个mNeedDispatch的意思大致可
- *    以推断出来，
+ *    以推断出来，是否需要处理；如果一切正常，不会return，而是  mIsSupportVisible = visible;
  * 在退到后台onPause的时候会辨别当前持有的类是否已经是处于隐藏状态，那就两种情况，隐藏和显示，如果隐藏了。那就是推到后太的时候，这个Fragment
  *   是出于隐藏状态的，比较特殊，一般我们都是退到后台的时候就是把可见的那个退到后台，但是当一个Activity有多个Fragment的时候，就会
  *   肯定除开可见的那个其他的Fragment是出于隐藏状态的，这个状态由默认为true的mInvisibleWhenLeave在退到后台的时候自动记录下来，表示
@@ -184,6 +184,10 @@ public class VisibleDelegate {
         });
     }
 
+    /**
+     * 当界面保持的状态需要改变的时候会调用这个方法，去改变当前保持的状态，主要是对 mIsSupportVisible 属性更改，表示显示
+     * 状态改变，则 mIsSupportVisible 会赋值为传入的 新值。
+     */
     private void dispatchSupportVisible(boolean visible) {
         if (mIsSupportVisible == visible) {
             mNeedDispatch = true;
