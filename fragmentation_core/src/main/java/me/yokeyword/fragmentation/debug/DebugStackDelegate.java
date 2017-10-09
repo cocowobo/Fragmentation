@@ -28,7 +28,7 @@ import me.yokeyword.fragmentation.R;
 
 /**
  * Created by YoKey on 17/6/13.
- * 调试窗口具体实现类，debug专用
+ * 调试窗口具体实现类，debug专用，对应的是使用本类的Activity的生命周期
  */
 
 public class DebugStackDelegate implements SensorEventListener {
@@ -40,6 +40,7 @@ public class DebugStackDelegate implements SensorEventListener {
         this.mActivity = activity;
     }
 
+    /**activity创建就会初始化传感器*/
     public void onCreate(int mode) {
         if (mode != Fragmentation.SHAKE) return;
         mSensorManager = (SensorManager) mActivity.getSystemService(Context.SENSOR_SERVICE);
@@ -49,24 +50,24 @@ public class DebugStackDelegate implements SensorEventListener {
     }
 
     public void onPostCreate(int mode) {
-        if (mode != Fragmentation.BUBBLE) return;
-        View root = mActivity.findViewById(android.R.id.content);
+        if (mode != Fragmentation.BUBBLE) return;                      //悬浮模式走进来
+        View root = mActivity.findViewById(android.R.id.content);      //整个窗体的根 View 中加入 悬浮view
         if (root instanceof FrameLayout) {
             FrameLayout content = (FrameLayout) root;
-            final ImageView stackView = new ImageView(mActivity);
+            final ImageView stackView = new ImageView(mActivity);      //新建 ImageView
             stackView.setImageResource(R.drawable.fragmentation_ic_stack);
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            params.gravity = Gravity.END;
+            params.gravity = Gravity.END;                              //end 表示悬浮view放在当前页面根view的最后的一个直接子view，
             final int dp18 = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18, mActivity.getResources().getDisplayMetrics());
-            params.topMargin = dp18 * 7;
-            params.rightMargin = dp18;
+            params.topMargin = dp18 * 7;                               //上paddign 18dp * 7
+            params.rightMargin = dp18;                                 //右padding 18dp
             stackView.setLayoutParams(params);
             content.addView(stackView);
-            stackView.setOnTouchListener(new StackViewTouchListener(stackView, dp18 / 4));
+            stackView.setOnTouchListener(new StackViewTouchListener(stackView, dp18 / 4));   //长按拖动
             stackView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showFragmentStackHierarchyView();
+                    showFragmentStackHierarchyView();                 //点击后展示树状Fragment 层级展示view
                 }
             });
         }
@@ -80,6 +81,7 @@ public class DebugStackDelegate implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        /**如果注册了摇晃传感器，就判断晃动达到12 这个值就触发显示 树状Fragment 层级结构图*/
         int sensorType = event.sensor.getType();
         float[] values = event.values;
         if (sensorType == Sensor.TYPE_ACCELEROMETER) {
@@ -144,6 +146,7 @@ public class DebugStackDelegate implements SensorEventListener {
         }
     }
 
+    /**获得所有的Fragment记录*/
     private List<DebugFragmentRecord> getFragmentRecords() {
         List<DebugFragmentRecord> fragmentRecordList = new ArrayList<>();
 

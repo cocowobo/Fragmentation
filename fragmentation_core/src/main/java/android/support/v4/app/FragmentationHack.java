@@ -12,6 +12,8 @@ import java.util.List;
  * http://stackoverflow.com/questions/23504790/android-multiple-fragment-transaction-ordering
  * <p>
  * Created by YoKey on 16/1/22.
+ * Fragment全解析系列（一）：那些年踩过的坑（本类是此文中介绍的 官方support25.4.0之下版本多个Fragment同时出栈的深坑BUG）
+ * http://www.jianshu.com/p/d9143a92ad94
  */
 public class FragmentationHack {
     private static boolean sSupportLessThan25dot4 = false;
